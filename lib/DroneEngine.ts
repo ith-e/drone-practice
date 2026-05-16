@@ -23,7 +23,7 @@ export class DroneEngine {
   private _activeNotes: ActiveNote[] = [];
   private _volume = 0.8;
   private _rootMidi = 48; // C3 default
-  private _options: DroneOptions = { fifth: true, octave: false, detune: 5 };
+  private _options: DroneOptions = { fifth: true, octave: false, detune: 0 };
 
   get isPlaying() { return this._isPlaying; }
   get activeNotes(): ActiveNote[] { return [...this._activeNotes]; }
@@ -53,6 +53,19 @@ export class DroneEngine {
 
   private midiToFreq(midi: number): number {
     return 440 * Math.pow(2, (midi - 69) / 12);
+  }
+
+  // Shimmer only applies when extra voices are active
+  private effectiveDetune(): number {
+    return (this._options.fifth || this._options.octave) ? this._options.detune : 0;
+  }
+
+  private applyDetuneToVoice(key: VoiceKey, cents: number): void {
+    const voice = this.voices.get(key);
+    if (!voice) return;
+    const half = cents / 2;
+    if (voice.oscs[0]) voice.oscs[0].detune.value = -half;
+    if (voice.oscs[1]) voice.oscs[1].detune.value =  half;
   }
 
   // ── Voice management ─────────────────────────────────────────────────────────
@@ -110,19 +123,20 @@ export class DroneEngine {
     // Tear down any running voices
     (['root', 'fifth', 'octave'] as VoiceKey[]).forEach(k => this.destroyVoice(k));
 
-    // Build voices
-    this.voices.set('root', this.createVoice('root', rootMidi, options.detune));
+    // Build voices — root shimmer only when extra voices are present
+    const rootDetune = (options.fifth || options.octave) ? options.detune : 0;
+    this.voices.set('root', this.createVoice('root', rootMidi, rootDetune));
     if (options.fifth)  this.voices.set('fifth',  this.createVoice('fifth',  rootMidi + 7,  options.detune));
     if (options.octave) this.voices.set('octave', this.createVoice('octave', rootMidi + 12, options.detune));
 
     this.rebuildActiveNotes();
 
-    // 20 ms attack
+    // 150 ms attack
     const gain = this.masterGain!.gain;
     const now = ctx.currentTime;
     gain.cancelScheduledValues(now);
     gain.setValueAtTime(0, now);
-    gain.linearRampToValueAtTime(this._volume, now + 0.02);
+    gain.linearRampToValueAtTime(this._volume, now + 0.15);
 
     this._isPlaying = true;
   }
@@ -134,17 +148,17 @@ export class DroneEngine {
     const gain = this.masterGain.gain;
     const now = ctx.currentTime;
 
-    // 50 ms release
+    // 150 ms release
     gain.cancelScheduledValues(now);
     gain.setValueAtTime(gain.value, now);
-    gain.linearRampToValueAtTime(0, now + 0.05);
+    gain.linearRampToValueAtTime(0, now + 0.15);
 
     this._isPlaying = false;
     this._activeNotes = [];
 
     setTimeout(() => {
       (['root', 'fifth', 'octave'] as VoiceKey[]).forEach(k => this.destroyVoice(k));
-    }, 120);
+    }, 250);
   }
 
   setVolume(v: number): void {
@@ -162,6 +176,8 @@ export class DroneEngine {
     } else {
       this.destroyVoice('fifth');
     }
+    // Update root shimmer based on whether any extra voice is now active
+    this.applyDetuneToVoice('root', this.effectiveDetune());
     this.rebuildActiveNotes();
   }
 
@@ -173,17 +189,17 @@ export class DroneEngine {
     } else {
       this.destroyVoice('octave');
     }
+    // Update root shimmer based on whether any extra voice is now active
+    this.applyDetuneToVoice('root', this.effectiveDetune());
     this.rebuildActiveNotes();
   }
 
   setDetune(cents: number): void {
     this._options.detune = cents;
     if (!this._isPlaying) return;
-    const half = cents / 2;
-    this.voices.forEach(({ oscs }) => {
-      if (oscs[0]) oscs[0].detune.value = -half;
-      if (oscs[1]) oscs[1].detune.value =  half;
-    });
+    this.applyDetuneToVoice('root', this.effectiveDetune());
+    this.applyDetuneToVoice('fifth', cents);
+    this.applyDetuneToVoice('octave', cents);
   }
 
   dispose(): void {

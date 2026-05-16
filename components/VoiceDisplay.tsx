@@ -4,8 +4,8 @@ import type { ActiveNote } from '@/types/drone';
 
 const ROLE_LABEL: Record<ActiveNote['role'], string> = {
   root:   'Root',
-  fifth:  'Fifth',
-  octave: 'Oct',
+  fifth:  'Rich',
+  octave: 'Bright',
 };
 
 const ROLE_COLOR: Record<ActiveNote['role'], string> = {

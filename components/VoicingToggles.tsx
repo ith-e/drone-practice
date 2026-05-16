@@ -37,8 +37,8 @@ export function VoicingToggles({ fifth, octave, onFifth, onOctave }: Props) {
     <div className="flex flex-col gap-2">
       <p className="text-xs text-muted tracking-widest uppercase text-center">Voicing</p>
       <div className="flex gap-3">
-        <Toggle label="Fifth" sub="+7 st" checked={fifth} onChange={onFifth} />
-        <Toggle label="Octave" sub="+12 st" checked={octave} onChange={onOctave} />
+        <Toggle label="Rich" sub="+7 st" checked={fifth} onChange={onFifth} />
+        <Toggle label="Bright" sub="+12 st" checked={octave} onChange={onOctave} />
       </div>
     </div>
   );
