@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom range slider — dark theme */
+@layer components {
+  .slider {
+    @apply bg-border;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #7c6af7;
+    cursor: pointer;
+    border: 2px solid #1a1a22;
+    box-shadow: 0 0 0 2px #7c6af750;
+  }
+
+  .slider::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #7c6af7;
+    cursor: pointer;
+    border: 2px solid #1a1a22;
+  }
+
+  .slider:focus-visible::-webkit-slider-thumb {
+    box-shadow: 0 0 0 4px #7c6af750;
+  }
+}
