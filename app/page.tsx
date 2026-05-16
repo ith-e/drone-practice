@@ -13,11 +13,9 @@ import { VoiceDisplay } from '@/components/VoiceDisplay';
 const DEFAULT_ROOT = 48; // C3
 
 export default function Page() {
-  // Drone engine state
   const drone = useDroneEngine();
   const wakeLock = useWakeLock();
 
-  // UI-local controls (source of truth for the next start() call)
   const [rootMidi, setRootMidi] = useState(DEFAULT_ROOT);
   const [fifth, setFifthState] = useState(true);
   const [octave, setOctaveState] = useState(false);
@@ -37,10 +35,9 @@ export default function Page() {
   const handleRootChange = useCallback((midi: number) => {
     setRootMidi(midi);
     if (drone.isPlaying) {
-      // Restart with new root — seamless re-attack
-      drone.start(midi, { fifth, octave, detune });
+      drone.setRoot(midi); // smooth glide, no restart
     }
-  }, [drone, fifth, octave, detune]);
+  }, [drone]);
 
   const handleFifth = useCallback((v: boolean) => {
     setFifthState(v);
@@ -63,47 +60,58 @@ export default function Page() {
   }, [drone]);
 
   return (
-    <main className="flex flex-col min-h-screen max-w-md mx-auto px-4 py-6 gap-6">
+    <main className="h-dvh flex flex-col px-3 py-4 gap-3 max-w-md mx-auto overflow-hidden">
 
       {/* Header */}
-      <div className="text-center">
-        <h1 className="text-2xl font-bold tracking-tight">Drone Practice</h1>
-        <p className="text-sm text-muted mt-1">Sustain a key while you sing</p>
+      <div className="text-center shrink-0">
+        <h1 className="text-xl font-bold tracking-tight">Drone Practice</h1>
       </div>
 
-      {/* Active voices display */}
-      <div className="rounded-xl border border-border bg-panel py-3 px-4">
-        <VoiceDisplay notes={drone.activeNotes} isPlaying={drone.isPlaying} />
+      {/* Two-column body */}
+      <div className="flex flex-1 gap-3 min-h-0">
+
+        {/* Left: note ladder — fills full height */}
+        <div className="w-1/2 flex flex-col min-h-0">
+          <NoteLadder value={rootMidi} onChange={handleRootChange} />
+        </div>
+
+        {/* Right: controls */}
+        <div className="w-1/2 flex flex-col gap-3 min-h-0">
+
+          {/* Active voices */}
+          <div className="rounded-xl border border-border bg-panel py-2 px-2 shrink-0">
+            <VoiceDisplay notes={drone.activeNotes} isPlaying={drone.isPlaying} />
+          </div>
+
+          {/* Play / stop */}
+          <div className="shrink-0">
+            <PlayButton
+              isPlaying={drone.isPlaying}
+              wakeLockSupported={wakeLock.supported}
+              wakeLockActive={wakeLock.active}
+              onToggle={handleToggle}
+            />
+          </div>
+
+          {/* Voicing toggles — stacked vertically */}
+          <div className="shrink-0">
+            <VoicingToggles
+              fifth={fifth}
+              octave={octave}
+              onFifth={handleFifth}
+              onOctave={handleOctave}
+              stacked
+            />
+          </div>
+
+          {/* Sliders */}
+          <div className="flex flex-col gap-4 rounded-xl border border-border bg-panel px-3 py-3 shrink-0">
+            <VolumeSlider value={volume} onChange={handleVolume} />
+            <DetuneSlider value={detune} onChange={handleDetune} />
+          </div>
+
+        </div>
       </div>
-
-      {/* Play / stop */}
-      <PlayButton
-        isPlaying={drone.isPlaying}
-        wakeLockSupported={wakeLock.supported}
-        wakeLockActive={wakeLock.active}
-        onToggle={handleToggle}
-      />
-
-      {/* Note ladder */}
-      <NoteLadder value={rootMidi} onChange={handleRootChange} />
-
-      {/* Voicing toggles */}
-      <VoicingToggles
-        fifth={fifth}
-        octave={octave}
-        onFifth={handleFifth}
-        onOctave={handleOctave}
-      />
-
-      {/* Sliders */}
-      <div className="flex flex-col gap-5 rounded-xl border border-border bg-panel px-5 py-4">
-        <VolumeSlider value={volume} onChange={handleVolume} />
-        <DetuneSlider value={detune} onChange={handleDetune} />
-      </div>
-
-      <footer className="text-center text-xs text-muted pb-2">
-        Use headphones for best results
-      </footer>
 
     </main>
   );

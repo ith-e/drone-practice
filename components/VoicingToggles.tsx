@@ -5,6 +5,7 @@ interface Props {
   octave: boolean;
   onFifth: (v: boolean) => void;
   onOctave: (v: boolean) => void;
+  stacked?: boolean;
 }
 
 function Toggle({ label, sub, checked, onChange }: {
@@ -32,11 +33,11 @@ function Toggle({ label, sub, checked, onChange }: {
   );
 }
 
-export function VoicingToggles({ fifth, octave, onFifth, onOctave }: Props) {
+export function VoicingToggles({ fifth, octave, onFifth, onOctave, stacked = false }: Props) {
   return (
     <div className="flex flex-col gap-2">
       <p className="text-xs text-muted tracking-widest uppercase text-center">Voicing</p>
-      <div className="flex gap-3">
+      <div className={`flex gap-2 ${stacked ? 'flex-col' : 'flex-row'}`}>
         <Toggle label="Rich" sub="+7 st" checked={fifth} onChange={onFifth} />
         <Toggle label="Bright" sub="+12 st" checked={octave} onChange={onOctave} />
       </div>

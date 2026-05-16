@@ -48,5 +48,10 @@ export function useDroneEngine() {
     engine().setDetune(cents);
   }, []);
 
-  return { isPlaying, activeNotes, start, stop, setVolume, setFifth, setOctaveDouble, setDetune };
+  const setRoot = useCallback((midi: number) => {
+    engine().setRoot(midi);
+    setActiveNotes(engine().activeNotes);
+  }, []);
+
+  return { isPlaying, activeNotes, start, stop, setVolume, setFifth, setOctaveDouble, setDetune, setRoot };
 }

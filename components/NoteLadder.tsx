@@ -24,12 +24,11 @@ export function NoteLadder({ value, onChange }: Props) {
   }, []);
 
   return (
-    <div className="flex flex-col items-stretch w-full">
-      <p className="text-xs text-muted mb-2 text-center tracking-widest uppercase">Root note</p>
+    <div className="flex flex-col h-full min-h-0">
+      <p className="text-xs text-muted mb-2 text-center tracking-widest uppercase shrink-0">Root note</p>
       <div
         ref={containerRef}
-        className="overflow-y-auto rounded-xl border border-border bg-panel"
-        style={{ maxHeight: '320px' }}
+        className="overflow-y-auto rounded-xl border border-border bg-panel flex-1 min-h-0"
       >
         {NOTES.map(midi => {
           const sharp = isSharp(midi);

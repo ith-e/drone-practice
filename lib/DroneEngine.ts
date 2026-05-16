@@ -202,6 +202,30 @@ export class DroneEngine {
     this.applyDetuneToVoice('octave', cents);
   }
 
+  setRoot(rootMidi: number, glideSecs = 0.5): void {
+    this._rootMidi = rootMidi;
+    this.rebuildActiveNotes();
+    if (!this._isPlaying || !this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    const end = now + glideSecs;
+
+    const glide = (key: VoiceKey, targetMidi: number) => {
+      const voice = this.voices.get(key);
+      if (!voice) return;
+      const targetFreq = this.midiToFreq(targetMidi);
+      voice.oscs.forEach(osc => {
+        osc.frequency.cancelScheduledValues(now);
+        osc.frequency.setValueAtTime(osc.frequency.value, now);
+        osc.frequency.exponentialRampToValueAtTime(targetFreq, end);
+      });
+    };
+
+    glide('root',   rootMidi);
+    glide('fifth',  rootMidi + 7);
+    glide('octave', rootMidi + 12);
+  }
+
   dispose(): void {
     (['root', 'fifth', 'octave'] as VoiceKey[]).forEach(k => this.destroyVoice(k));
     this.ctx?.close();
